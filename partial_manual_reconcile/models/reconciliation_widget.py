@@ -11,14 +11,14 @@ class AccountReconciliation(models.AbstractModel):
     def get_counterpart_vals(self, values: list) -> dict:
         prepared_vals = dict()
         for rec in values:
-            prepared_vals.update({rec['counterpart_aml_id']: {'debit': rec['debit'], 'credit': rec['credit']}})
+            balance = rec['balance']
+            debit = balance if balance > 0 else 0
+            credit = -balance if balance < 0 else 0
+            prepared_vals.update({rec['id']: {'debit': debit, 'credit': credit}})
 
             # Write partial residual amount
-            acmvl = self.env['account.move.line'].browse(rec['counterpart_aml_id'])
-            if rec['debit'] != 0:
-                acmvl.partial_amount_residual = rec['debit']
-            if rec['credit'] != 0:
-                acmvl.partial_amount_residual = rec['credit'] * -1
+            acmvl = self.env['account.move.line'].browse(rec['id'])
+            acmvl.partial_amount_residual = balance
         return prepared_vals
 
     @api.model
@@ -26,14 +26,4 @@ class AccountReconciliation(models.AbstractModel):
         _logger.info('partial_process_move_lines function call')
 
         self.get_counterpart_vals(values[0]['counterpart_aml_dicts'])
-
-        Partner = self.env['res.partner']
-        Account = self.env['account.account']
-
-        for datum in data:
-            if len(datum['mv_line_ids']) >= 1 or len(datum['mv_line_ids']) + len(datum['new_mv_line_dicts']) >= 2:
-                self._process_move_lines(datum['mv_line_ids'], datum['new_mv_line_dicts'])
-
-            if datum['type'] == 'partner':
-                partners = Partner.browse(datum['id'])
-                partners.mark_as_reconciled()
+        self.process_move_lines(data)

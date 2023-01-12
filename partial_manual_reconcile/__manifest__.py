@@ -2,7 +2,8 @@
     "name": "Partial Reconcile",
     "summary": "Partial Manual Reconcile",
     "sequence": 15,
-    "version": "1.0",
+    "version": "15.0.1.0",
+    'license': 'Other proprietary',
     'category': 'Accounting',
     "website": "",
     "author": "Maksym Koriahin",
@@ -14,7 +15,11 @@
         "account"
     ],
     "data": [
-        'views/assets_backend.xml',
         'views/account_move_views.xml'
     ],
+    'assets': {
+        'web.assets_backend': [
+            "/partial_manual_reconcile/static/src/js/reconciliation_model.js",
+        ]
+    },
 }
